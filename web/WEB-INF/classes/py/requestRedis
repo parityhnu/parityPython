@@ -1,0 +1,59 @@
+import urllib3
+import re
+import time
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
+import src.jd as jd
+import src.taobao as taobao
+import redis
+from concurrent.futures import ThreadPoolExecutor
+
+pool = redis.ConnectionPool(host='localhost', port=6379, password='binqing')
+r = redis.Redis(connection_pool=pool)
+docTB = []
+docJD = []
+
+
+def catchTB(goodName,sort):
+    docTB = taobao.start(goodName, sort)
+    if jdfinish:
+        parseList()
+
+def catchJD(goodName,sort):
+    docJD = jd.start(goodName, sort)
+    if tbfinish:
+        parseList()
+
+def parseList():
+    docs = []
+    docs.append(docJD)
+    docs.append(docTB)
+    print(len(docs))
+    print(docs)
+
+if __name__ == '__main__':
+    global tbfinish
+    global jdfinish
+    goodName = 'iphone'
+    sort = '0';
+    catchJD( goodName, sort)
+    catchTB( goodName, sort)
+    # with ThreadPoolExecutor(2) as executor:
+    #     while(True):
+    #         search = r.rpop('redis_url')
+    #         if search != None:
+    #             result = search.decode()
+    #             print(result)
+    #             goodName = result.split('_', 2)[0]
+    #             sort = result.split('_', 2)[2]
+    #             print(goodName + " " + sort)
+    #             tbfinish = False
+    #             jdfinish = False
+    #             executor.submit(catchTB,goodName, sort)
+    #             executor.submit(catchJD,goodName, sort)
+    #         # else:
+    #         #     print(time.time())
+    #         time.sleep(0.5)

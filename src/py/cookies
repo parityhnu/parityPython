@@ -1,0 +1,57 @@
+from selenium import webdriver
+import time
+from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.chrome.options import Options
+
+def tbCK():
+    try:
+        url = 'https://s.taobao.com//search?q=iphonexs'
+        # chrome
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        driver = webdriver.Chrome(executable_path='C:\chromedriver_win32\chromedriver.exe', chrome_options=chrome_options)
+        # driver = webdriver.PhantomJS(executable_path=r'G:\phantomjs-2.1.1-windows\bin\phantomjs.exe')
+        driver.get(url)
+        cookie_list = driver.get_cookies()
+        print(cookie_list)
+        ck = ""
+        for cookie in cookie_list:
+            ck += cookie['name'] + '=' + cookie['value'] + ';'
+        with open('tbc.txt', 'w', encoding="utf-8") as f:
+            f.write(ck)
+            f.close
+        print(ck)
+    except Exception as e:
+        print(e)
+
+def jdCK():
+    try:
+        url = 'https://search.jd.com/Search?keyword=%E6%AC%A7%E8%88%92%E4%B8%B9'
+        # chrome
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-gpu')
+        driver = webdriver.Chrome(executable_path='C:\chromedriver_win32\chromedriver.exe', chrome_options=chrome_options)
+        # driver = webdriver.PhantomJS(executable_path=r'G:\phantomjs-2.1.1-windows\bin\phantomjs.exe')
+        driver.get(url)
+        cookie_list = driver.get_cookies()
+        print(cookie_list)
+        ck = ""
+        for cookie in cookie_list:
+            ck += cookie['name'] + '=' + cookie['value'] + ';'
+        with open('jdc.txt', 'w', encoding="utf-8") as f:
+            f.write(ck)
+            f.close
+        print(ck)
+    except Exception as e:
+        print(e)
+
+
+if __name__ == '__main__':
+    with ThreadPoolExecutor(2) as executor:
+        while(True):
+            # executor.submit(tbCK)
+            executor.submit(jdCK)
+            print(time.time())
+            time.sleep(600)

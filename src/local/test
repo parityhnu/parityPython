@@ -1,0 +1,23 @@
+#!/usr/bin/env Python
+# coding=utf-8
+import requests
+from lxml import etree
+import re
+import MySQLdb
+import time
+from urllib import parse
+import src.getIP as getIP
+from pymongo import MongoClient
+import json
+
+mongoConn = MongoClient("mongodb://47.100.108.8:27017/")
+mongoDb = mongoConn["parity"]  #连接parity数据库，没有则自动创建
+mongoSet = mongoDb["test"]
+
+if __name__=="__main__":
+    try:
+        doc = {"score": "1"}
+        x = mongoSet.insert_one(doc)
+        print(x)
+    except Exception as e:
+        print(e)

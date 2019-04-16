@@ -1,0 +1,123 @@
+#!/usr/bin/env Python
+# coding=utf-8
+import requests
+from lxml import etree
+import re
+import time
+import MySQLdb
+from urllib import parse
+from sys import argv
+
+conn = MySQLdb.connect(host='127.0.0.1', port=3306, user='root', passwd='', charset='utf8', db='proxy')
+cursor = conn.cursor()
+connPrice = MySQLdb.connect(host='127.0.0.1', port=3306, user='root', passwd='', charset='utf8', db='price')
+cursorPrice = connPrice.cursor()
+
+class GetIp():
+    def delete_ip(self, ip):
+        delete_ip_sql = "delete from proxys where ip = '{0}'".format(ip)
+        cursor.execute(delete_ip_sql)
+        conn.commit()
+        return True
+
+    def judge_ip(self, ip, port, type, goods_root, i):
+        goods = parse.quote(goods_root)
+        # 判断给出的代理 ip 是否可用
+        http_url =  'https://list.tmall.com/search_product.htm?q=' + goods + '&s=' + str(60*i)
+        proxy_url = '{2}://{0}:{1}'.format(ip, port, type)
+
+        headers = {'authority': 'list.tmall.com',
+        'method': 'GET',
+        'path': 'search_product.htm?q=' + goods + '&s=' + str(60*i),
+        'scheme': 'https',
+        'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'accept-encoding':'gzip, deflate, br',
+        'accept-language':'zh-CN,zh;q=0.9',
+        'Cookie':'lid=%E6%9B%BC%E9%99%80%E8%8A%B1%E7%9A%84%E6%A2%A6; cna=uk05E1K1iSkCAToUSgC4Albi; otherx=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0; hng=CN%7Czh-CN%7CCNY%7C156; x=__ll%3D-1%26_ato%3D0; enc=gne1gTqi1OtRNhkvrXpgjxVbVbux0H%2FCuKccpVFXEvGRVtl1l%2BDxDl6ykZ6lEgGtcGsspErn1VsmptWXoWE0sQ%3D%3D; _med=dw:1536&dh:864&pw:1920&ph:1080&ist:0; cq=ccp%3D1; _m_h5_tk=7dadbda8ea5007944f1abe7f01fb95b2_1544548614205; _m_h5_tk_enc=1b3d24fab9b6926f0d33e7d774cac9a2; sm4=430100; csa=undefined; t=f9277a6b756eadb7a19de450304dc685; _tb_token_=577507b873eab; cookie2=15587b0095bb1889d88472e9bafb5558; tt=tmall-main; res=scroll%3A669*9516-client%3A669*754-offset%3A669*9516-screen%3A1536*864; pnm_cku822=098%23E1hv5QvUvbpvUvCkvvvvvjiPR2FwljnHR2zyAj3mPmPZgj3nn2zysjDPn2Mpzjr8iQhvCvvv9UUtvpvhvvvvvvyCvhQW2RQvC0kDyO2v5fh3Zi7v1n9aRoxBlwet9boJEcqUAjcQ%2Bul1oc7g%2BXZz%2BsBwMWLUQCuwJybh1nmQRqwiLO2vqU0QKoZH1nsIAfUTkphvC99vvOCzBTyCvv9vvUmsTkvxHbyCvm9vvvvvphvvvvvvvxavpvFbvvv2vhCv2UhvvvWvphvWgvvvvQCvpvs9vphvC9vhvvCvpvGCvvpvvPMM; isg=BGdnQqC3922gX3TpuK1kyiyi9ptGyyFAR0ygKTnURvatKIbqQb3DH51qTmgT-xNG',
+        'referer': 'https://list.tmall.com/search_product.htm?q=' + goods + '&s=' + str(60*i),
+        'upgrade-insecure-requests':'1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
+        }
+
+        try:
+            proxy_dict = {
+                'http': proxy_url
+            }
+            response = requests.get(http_url, headers = headers, proxies = proxy_dict, timeout = 20)
+
+        except Exception as e:
+            self.delete_ip(ip)
+            return False
+        else:
+            code = response.status_code
+            if code >= 200 or code < 300:
+                response.encoding='gbk'
+                html_doc = response.text
+                if html_doc.find("login-title") == -1:
+                    parsePage(html_doc, goods_root, i)
+                    return True
+                else:
+                    self.delete_ip(ip)
+                    return False
+            else:
+                self.delete_ip(ip)
+                return False
+
+    def getHTMLText(self, goods, i):
+        select_random = '''
+            select ip,port,proxy_type from proxys order by rand() limit 1
+        '''
+        cursor.execute(select_random)
+        result = cursor.fetchone()
+        ip = result[0]
+        port = result[1]
+        type = result[2]
+
+        judge_re = self.judge_ip(ip, port, type, goods, i)
+        if judge_re:
+            print(True)
+        else:
+            self.getHTMLText(goods, i)
+            print(False)
+
+def parsePage(html, goods_root, i):
+    delete_sql = '''delete from tm_price where page = "{0}" and keyword = "{1}"'''.format(i, goods_root)
+    cursorPrice.execute(delete_sql)
+    connPrice.commit()
+    html1 = etree.HTML(html)
+    datas=html1.xpath('//div[contains(@class,"product  ")]')
+    try:
+        for data in datas:
+            p_price = data.xpath('div/p[@class="productPrice"]/em/@title')
+            p_sale = data.xpath('div/p[@class="productStatus"]/span/em/text()')
+            p_name = data.xpath('div/div[@class="productTitle "]/a/@title')
+            p_href = data.xpath('div/div[@class="productImg-wrap"]/a/@href')
+            p_image = data.xpath('div/div[@class="productImg-wrap"]/a/img/@src')
+            if len(p_image) == 0:
+                p_image = data.xpath('div/div[@class="productImg-wrap"]/a/img/@data-ks-lazyload')
+            if len(p_name) == 0:
+                p_name = data.xpath('div/div[@class="productTitle productTitle-spu"]/a')
+                name = p_name[0].xpath('string(.)')
+                if len(p_name) == 2:
+                    name += " " + p_name[1].xpath('text()')[0]
+            else :
+                name = p_name[0]
+            insert_sql = '''
+                  insert into tm_price(name,price,sale,href,image,keyword,searchtime,page)
+                  values("{0}","{1}","{2}","{3}","{4}","{5}","{6}","{7}")'''.format(name, p_price[0], p_sale[0], p_href[0], p_image[0], goods_root, time.time(), i)
+            cursorPrice.execute(insert_sql)
+            connPrice.commit()
+    except Exception as e:
+        print (e)
+
+if __name__=="__main__":
+    index = argv[1]
+    goods = argv[2]
+
+    getHtml = GetIp();
+    html= getHtml.getHTMLText(goods, index)
+
+    cursor.close()
+    cursorPrice.close()
+    connPrice.close()
+    conn.close()
