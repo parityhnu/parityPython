@@ -122,7 +122,7 @@ def parsePage(html, goods_root, index, ip, port, type, sort):
                     score = score + 10000
                 doc = {"name" : p_name[index2], "price" : p_price[index2], "salecomment" : p_comment[index2], "href" : p_href[index2],
                                "image" : p_image[index2], "keyword" : goods_root, "page" : int(index)-1, "shop" : p_shop[index2],
-                                "sort" : sort, "score": score, "type" : 0, "id" : p_id[index2]}
+                                "sort" : sort, "score": score, "type" : 0, "gid" : p_id[index2]}
                 v.docs.append(doc)
                 index2 = index2 + 1
 

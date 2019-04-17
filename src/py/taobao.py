@@ -140,7 +140,7 @@ def parsePage(html, goods_root, index, sort):
                 type = 2
             doc = {"name" : title, "price" : price, "salecomment" : sale, "href" : detailUrl,
                    "image" : picUrl, "keyword" : goods_root, "page" : int(index), "shop" : shop,
-                    "sort": sort, "score": score, "type" : type, "id" : id, "user": userid}
+                    "sort": sort, "score": score, "type" : type, "gid" : id, "user": userid}
             v.docs.append(doc)
     except Exception as e:
         print (e)
