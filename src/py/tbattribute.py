@@ -15,10 +15,12 @@ from urllib import parse
 import py.getIP as getIP
 from pymongo import MongoClient
 import json
+from bs4 import BeautifulSoup
+
 
 mongoConn = MongoClient("mongodb://47.100.108.8:27017/")
 mongoDb = mongoConn["parity"]  #连接parity数据库，没有则自动创建
-mongoSet = mongoDb["comments_tb"]
+mongoSet = mongoDb["attribute_tb"]
 
 conn = MySQLdb.connect(host='127.0.0.1', port=3306, user='root', passwd='', charset='utf8', db='proxy')
 cursor = conn.cursor()
@@ -31,22 +33,22 @@ class GetIp():
         conn.commit()
         return True
 
-    def judge_ip(self, ip, port, type, id, index):
+    def judge_ip(self, ip, port, type, id):
         # 判断给出的代理 ip 是否可用
-        http_url =  'https://rate.taobao.com/feedRateList.htm?auctionNumId=' + id + '&currentPageNum=' + str(index)
+        http_url =  'https://item.taobao.com/item.htm?id=' + id
         proxy_url = '{2}://{0}:{1}'.format(ip, port, type)
 
-        headers = {'authority': 'rate.taobao.com',
+        headers = {'authority': 'item.taobao.com',
                    'method': 'GET',
-                   'path': '/feedRateList.htm?auctionNumId=' + id + '&currentPageNum=' + str(index),
+                   'path': '/item.htm?id=' + id,
                    'scheme': 'https',
-                   'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                   'accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
                    'accept-encoding':'gzip, deflate, br',
                    'accept-language':'zh-CN,zh;q=0.9',
                    'cache-control':'max-age=0',
-                   'Cookie':'tg=0; cna=uk05E1K1iSkCAToUSgC4Albi; thw=cn; hng=CN%7Czh-CN%7CCNY%7C156; t=f9277a6b756eadb7a19de450304dc685; enc=v7jw24a%2B8dg2MiZzVZCT8ppVjd1YCgzHD8orfbYZnJNZ1STrJMocs44oDu%2BtsjfABeOzCyDdovHNJKIrrqSdPA%3D%3D; x=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0%26__ll%3D-1%26_ato%3D0; miid=442944951227601934; UM_distinctid=16787c0c13e1a9-09fe691b0636d7-3f674706-144000-16787c0c13f58a; _cc_=URm48syIZQ%3D%3D; mt=ci%3D-1_1; cookie2=165406e54d541df45f0b5ba966b07e1c; _tb_token_=5685eab58f6e1; v=0; _m_h5_tk=7c0a5649f5e9f8a87507c8ce65a5a2c4_1554539729108; _m_h5_tk_enc=4e527a02a735d7ee5a4a71a39e1b30cb; x5sec=7b22726174656d616e616765723b32223a226438666332343638656631646662356131663761333435373962353638313533435054366f4f5546454e6e783235716a372b4f6e7a41453d227d; l=bBgIc1l7v-IcnRXkBOCidcSthc7TTIRVgulN6Rrvi_5CFsxBmlQOlGBW5Uv6Vj5POnYB4wIEhpJt3FZUJy91.; isg=BFFRghLv6cjilgXQ3t-aIbjVYF2cmd9LriCX-TPmF5gC2nMsewy4AHcweO6ZUl1o',
+                   'Cookie':'cna=gWiWEzd3KCgCAXHw6t/tdRt+; tracknick=little%5Cu6B22%5Cu513F; _cc_=U%2BGCWk%2F7og%3D%3D; tg=0; t=e9801ad20b3c927468a784a61e1843b6; hng=CN%7Czh-CN%7CCNY%7C156; thw=cn; _m_h5_tk=43598389d9d5c183061caf2bf88a531e_1555488871521; _m_h5_tk_enc=cd41e3e27cf7d9677770989c215f2d45; v=0; cookie2=53a11f5ed55396a5bb1e4b2acc24fcaa; _tb_token_=e19717ebf6bb0; isg=BI6OVXXZXk9XZOp9lQdl-wyY32SQp1HgmnacFrjX-hFMGy51IJ-iGTTZUwfSGEoh; l=bBOGb8NPv2IcXDusBOCanurza77OSIRYYuPzaNbMi_5Bd6TsOn_Olaz5bF96Vj5RsYTB4smPRvp9-etkZ',
                    'upgrade-insecure-requests':'1',
-                   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'
+                   'user-agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
                    }
         print("proxy_url", proxy_url)
         try:
@@ -62,11 +64,11 @@ class GetIp():
         else:
             code = response.status_code
             if code >= 200 or code < 300:
-                response.encoding='utf-8'
+                response.encoding='gbk'
                 html_doc = response.text
                 if html_doc.find("login-title") == -1:
                     print("代理 ip {0} 及 端口号 {1} 可用".format(ip, port))
-                    parsePage(html_doc, id, index)
+                    parsePage(html_doc, id)
                     return True
                 else:
                     print("[有返回，但是被反爬]代理 ip {0} 及 端口号 {1} 不可用，即将从数据库中删除".format(ip, port))
@@ -77,7 +79,7 @@ class GetIp():
                 self.delete_ip(ip)
                 return False
 
-    def getHTMLText(self, id, index):
+    def getHTMLText(self, id):
         try:
             select_random = '''
             select ip,port,proxy_type from proxys order by rand() limit 1
@@ -92,67 +94,39 @@ class GetIp():
                     return False
                 else:
                     tryTime = 1
-                    self.getHTMLText(id, index)
+                    self.getHTMLText(id)
             else:
                 ip = result[0]
                 port = result[1]
                 type = result[2]
 
-                judge_re = self.judge_ip(ip, port, type, id, index)
+                judge_re = self.judge_ip(ip, port, type, id)
                 if judge_re:
                     return True
                 else:
-                    self.getHTMLText(id, index)
+                    self.getHTMLText(id)
                     return False
         except Exception as e:
             print(e)
 
-def parsePage(html, id, index):
+def parsePage(html, id):
     try:
-        mongoSet.delete_many({"index" : int(index), "gid" : id})
-        html = html.split('(', 1)[1]
-        html = html[:-2]
-        datas1 = json.loads(html)
-        datas = datas1['comments']
-        content = {}
-        attendpics = []
+        mongoSet.delete_many({ "gid" : id})
+        html1 = BeautifulSoup(html, "html.parser")
+        datas= html1.select('.attributes-list li')
         for data in datas:
-            ctime = data['date']
-            if ctime == '':
-                ctime = 0
-            else:
-                ctime = int(float(time.mktime(time.strptime(ctime,"%Y年%m月%d日 %H:%M"))) * 1000)
-            appendComment = data['append']
-            rateContent = data['content']
-            pics = data['photos']
-            picsresult = []
-            for pic in pics:
-                picsresult.append(pic['url'])
-            auctionSku = data['auction']['sku']
-            displayUserNick = data['user']['nick']
-            appendpicsresult = []
-            if appendComment is not None:
-                content = appendComment['content']
-                attendpics = appendComment['photos']
-                for pic in attendpics:
-                    appendpicsresult.append(pic['url'])
-
-            doc = {"gid" : id, "index" : index, "ctime" : ctime,
-                   "rateContent" : rateContent, "pics" : picsresult, "auctionSku" : auctionSku,
-                   "displayUserNick" : displayUserNick, "content": content, "attendpics": appendpicsresult}
+            doc = {"gid" : id, "attribute" : data.text}
+            print(doc)
             x = mongoSet.insert_one(doc)
-
     except Exception as e:
         print (e)
 
 def start(id):
     time1 = time.time()
     getHtml = GetIp();
-    for page in range(5):
-        html= getHtml.getHTMLText(id, page + 1)
-        time.sleep(random.uniform(0.1,0.3))
+    html= getHtml.getHTMLText(id)
     time2 = time.time()
-    print('tbcomment:' +str(time2-time1))
+    print('tbattribute:' +str(time2-time1))
 
 if __name__=="__main__":
-    start('587861043551')
+    start('588958332404')
