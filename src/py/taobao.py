@@ -1,5 +1,6 @@
 #!/usr/bin/env Python
 # coding=utf-8
+
 import requests
 from lxml import etree
 import re
@@ -121,7 +122,6 @@ def parsePage(html, goods_root, index, sort):
         dlt = re.findall(r'\"detail_url\"\:\".*?\"',html)
         piclt = re.findall(r'\"pic_url\"\:\".*?\"',html)
         nick = re.findall(r'\"nick\"\:\".*?\"',html)
-        tmall = re.findall(r'\"isTmall\"\:.*?e',html)
         for i in range(len(slt)-1):
             price = eval(plt[i].split(':', 1)[1])
             title = eval(tlt[i].split(':', 1)[1])
@@ -131,12 +131,11 @@ def parsePage(html, goods_root, index, sort):
             detailUrl = eval(dlt[i].split(':', 1)[1])
             picUrl = eval(piclt[i].split(':', 1)[1])
             shop = eval(nick[i].split(':', 1)[1])
-            istmall = tmall[i][-2]
             sale = int(str(sale)[0:-3])
             score = 100000 - 200 * i
             score = score + sale / 10
             type = 1
-            if istmall == 'u':
+            if 'tmall' in detailUrl:
                 type = 2
             doc = {"name" : title, "price" : price, "salecomment" : sale, "href" : detailUrl,
                    "image" : picUrl, "keyword" : goods_root, "page" : int(index), "shop" : shop,

@@ -11,6 +11,9 @@ import py.taobao as taobao
 import py.jdcomment as jdcomment
 import py.tbcomment as tbcomment
 import py.tmcomment as tmcomment
+import py.jdattribute as jdattribute
+import py.tbattribute as tbattribute
+import py.tmattribute as tmattribute
 import redis
 from concurrent.futures import ThreadPoolExecutor
 from pymongo import MongoClient
@@ -111,12 +114,15 @@ def insertparity(goodName, sort, myglobal):
                 mongoSetParity.insert_one(parityTB)
                 mongoSetParity.insert_one(parityJD)
                 num = num + 1
-                with ThreadPoolExecutor(2) as executor:
+                with ThreadPoolExecutor(4) as executor:
                     if parityTB['type'] == 2:
-                        executor.submit(catchTMComment, parityTB['id'], parityTB['user'])
+                        executor.submit(catchTMComment, parityTB['gid'], parityTB['user'])
+                        executor.submit(catchTMAttribute, parityTB['gid'])
                     else:
-                        executor.submit(catchTBComment, parityTB['id'])
-                    executor.submit(catchJDComment, parityJD['id'])
+                        executor.submit(catchTBComment, parityTB['gid'])
+                        executor.submit(catchTBAttribute, parityTB['gid'])
+                    executor.submit(catchJDComment, parityJD['gid'])
+                    executor.submit(catchJDAttribute, parityJD['gid'])
     except Exception as e:
         print(e)
     print("parity finished")
@@ -129,6 +135,15 @@ def catchTBComment(id):
 
 def catchJDComment(id):
     jdcomment.start(id)
+
+def catchTMAttribute(id):
+    tmattribute.start(id)
+
+def catchTBAttribute(id):
+    tbattribute.start(id)
+
+def catchJDAttribute(id):
+    jdattribute.start(id)
 
 def eidt_1(s1, s2):
     s1.replace(' ','')
@@ -171,6 +186,6 @@ def start(goodName, sort, docTB, docJD):
         executor.submit(filterJD, goodName, sort, myglobal)
 
 if __name__ == '__main__':
-    goodName = '三星s10'
+    goodName = 'iphone xs max'
     sort = 0
     start(goodName, sort, catchTB(goodName, sort), catchJD(goodName, sort))
