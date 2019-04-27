@@ -113,9 +113,15 @@ def parsePage(html, id):
 
         mongoSet.delete_many({ "gid" : id})
         html1 = BeautifulSoup(html, "html.parser")
-        datas= html1.select('.p-parameter li')
+        datas= html1.select('.parameter1 p')
         for data in datas:
             doc = {"gid" : id, "attribute" : data.text}
+            print(data.text)
+            x = mongoSet.insert_one(doc)
+        datas= html1.select('.parameter2 li')
+        for data in datas:
+            doc = {"gid" : id, "attribute" : data.text}
+            print(data.text)
             x = mongoSet.insert_one(doc)
     except Exception as e:
         print (e)
@@ -125,7 +131,7 @@ def start(id):
     getHtml = GetIp();
     html= getHtml.getHTMLText(id)
     time2 = time.time()
-    print('jdcomment:' +str(time2-time1))
+    print('jdattribute:' +str(time2-time1))
 
 if __name__=="__main__":
     start('100000177760')
