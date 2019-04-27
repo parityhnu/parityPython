@@ -116,12 +116,10 @@ def parsePage(html, id):
         datas= html1.select('.parameter1 p')
         for data in datas:
             doc = {"gid" : id, "attribute" : data.text}
-            print(data.text)
             x = mongoSet.insert_one(doc)
         datas= html1.select('.parameter2 li')
         for data in datas:
             doc = {"gid" : id, "attribute" : data.text}
-            print(data.text)
             x = mongoSet.insert_one(doc)
     except Exception as e:
         print (e)

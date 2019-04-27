@@ -129,6 +129,7 @@ def parsePage(html, id, index):
             for pic in pics:
                 picsresult.append(pic['url'])
             auctionSku = data['auction']['sku']
+            auctionSku = auctionSku.replace('&nbsp', '')
             displayUserNick = data['user']['nick']
             appendpicsresult = []
             if appendComment is not None:
