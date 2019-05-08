@@ -6,33 +6,100 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-import src.jd as jd
-import src.taobao as taobao
+import py.jd as jd
+import py.taobao as taobao
+import py.parity as par
 import redis
 from concurrent.futures import ThreadPoolExecutor
+from pymongo import MongoClient
 
-pool = redis.ConnectionPool(host='47.100.108.8', port=6379, password='binqing')
+mongoConn = MongoClient("mongodb://47.100.108.8:27017/")
+mongoDb = mongoConn["parity"]  #连接parity数据库，没有则自动创建
+mongoSet = mongoDb["goods"]
+
+pool = redis.ConnectionPool(host='localhost', port=6379, password='binqing')
 r = redis.Redis(connection_pool=pool)
 
-def catchTB(goodName, page, sort):
-    taobao.start(goodName, page, sort)
+class MyGlobal:
+    def __init__(self):
+        self.jdfinish = False
+        self.tbfinish = False
+        self.docTB = []
+        self.docJD = []
 
-def catchJD(goodName, page, sort):
-    jd.start(goodName, page, sort)
+def catchTB(goodName,sort, myglobal):
+    myglobal.docTB = taobao.start(goodName, sort)
+    myglobal.tbfinish = True
+    if myglobal.jdfinish:
+        parseList(goodName, sort, myglobal)
+
+def catchJD(goodName,sort, myglobal):
+    myglobal.docJD = jd.start(goodName, sort)
+    myglobal.jdfinish = True
+    if myglobal.tbfinish:
+        parseList(goodName, sort, myglobal)
+
+def sortByScore(elem):
+    return elem['score']
+
+def sortByPrice(elem):
+    return elem['price']
+
+def sortBySaleComment(elem):
+    return elem['salecomment']
+
+def parseList(goodName, sort, myglobal):
+    sort = int(sort)
+    docs = []
+    docs.extend(myglobal.docJD)
+    docs.extend(myglobal.docTB)
+    if sort == 0:
+        docs.sort(key= sortByScore,reverse = True)
+    elif sort == 1:
+        docs.sort(key= sortBySaleComment,reverse = True)
+    elif sort == 2:
+        docs.sort(key= sortByPrice,reverse = False)
+    elif sort == 3:
+        docs.sort(key= sortByPrice,reverse = True)
+    print(len(docs))
+    index = 0
+    page = 0
+    try:
+        for doc in docs:
+            print(index)
+            doc['page'] = page
+            index = index + 1
+            if index == 20:
+                page = page + 1
+                index = 0
+        mongoSet.delete_many({ "keyword" : goodName, "sort" : int(sort)})
+        t1 = time.time()
+        mongoSet.insert_many(docs)
+        print(time.time() - t1)
+    except Exception as e:
+        print(e)
+    parity(goodName, sort, myglobal)
+
+def parity(goodName, sort, myglobal):
+    try:
+        todo = goodName + '_' + str(sort)
+        print(todo)
+        par.start(goodName, sort, myglobal.docTB, myglobal.docJD)
+    except Exception as e:
+        print(e)
 
 if __name__ == '__main__':
     with ThreadPoolExecutor(2) as executor:
         while(True):
-            search = r.rpop('redis_url')
+            search = r.rpop('redis_url_once')
             if search != None:
                 result = search.decode()
                 print(result)
                 goodName = result.split('_', 2)[0]
-                page = result.split('_', 2)[1]
-                sort = result.split('_', 2)[2]
-                print(goodName + " " + page + " " + sort)
-                executor.submit(catchTB,goodName, page, sort)
-                executor.submit(catchJD,goodName, page, sort)
+                sort = result.split('_', 2)[1]
+                myglobal = MyGlobal()
+                executor.submit(catchTB, goodName, sort, myglobal)
+                executor.submit(catchJD, goodName, sort, myglobal)
             # else:
             #     print(time.time())
             time.sleep(0.5)

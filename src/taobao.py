@@ -1,23 +1,21 @@
-﻿#!/usr/bin/env Python
+#!/usr/bin/env Python
 # coding=utf-8
+
 import requests
 from lxml import etree
 import re
 import time
 import MySQLdb
 from urllib import parse
-import src.getIP as getIP
-from pymongo import MongoClient
-
-mongoConn = MongoClient("mongodb://47.100.108.8:27017/")
-mongoDb = mongoConn["parity"]  #连接parity数据库，没有则自动创建
-mongoSet = mongoDb["goods_tb"]
-with open('tbc.txt', 'r', encoding="utf-8") as f:
-    ck = f.read()
+import py.getIP as getIP
+import random
+import threading
 
 conn = MySQLdb.connect(host='127.0.0.1', port=3306, user='root', passwd='', charset='utf8', db='proxy')
 cursor = conn.cursor()
 tryTime = 0
+
+v = threading.local()
 
 class GetIp():
     def delete_ip(self, ip):
@@ -38,10 +36,8 @@ class GetIp():
             psort = "price-desc"
         goods = parse.quote(goods_root)
         # 判断给出的代理 ip 是否可用
-        http_url =  'https://s.taobao.com/search?q=' + goods + '&s=' + str(44*index) + '&sort=' + psort
+        http_url =  'https://s.taobao.com/search?q=' + goods + '&s=' + str(44*index) + '&sort=' + psort + '&initiative_id=staobaoz_' + time.strftime('%Y%m%d',time.localtime(time.time()))
         proxy_url = '{2}://{0}:{1}'.format(ip, port, type)
-
-
 
         headers = {'authority': 's.taobao.com',
         'method': 'GET',
@@ -51,7 +47,7 @@ class GetIp():
         'accept-encoding':'gzip, deflate, br',
         'accept-language':'zh-CN,zh;q=0.9',
         'cache-control':'max-age=0',
-        'Cookie':'tg=0; cna=uk05E1K1iSkCAToUSgC4Albi; thw=cn; hng=CN%7Czh-CN%7CCNY%7C156; t=f9277a6b756eadb7a19de450304dc685; enc=v7jw24a%2B8dg2MiZzVZCT8ppVjd1YCgzHD8orfbYZnJNZ1STrJMocs44oDu%2BtsjfABeOzCyDdovHNJKIrrqSdPA%3D%3D; x=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0%26__ll%3D-1%26_ato%3D0; miid=442944951227601934; UM_distinctid=16787c0c13e1a9-09fe691b0636d7-3f674706-144000-16787c0c13f58a; _uab_collina=155228537554554124977176; _cc_=URm48syIZQ%3D%3D; JSESSIONID=9470C3E9CF741D6CE7128695E4C8169A; l=bBQM9JLqvNd2ClIEBOCTScSthVbtOIRAgulN6R5ei_5I86L_rh7OlONJ4Fp6Vj5R_GLB4wIEhpy9-etoi; isg=BKKiGIMICmRVDBDUkkpQLmWM8yhz1LxQmeVkjOw765XAv0M51IG1Hdj967vmrx6l',
+        'Cookie':'tg=0; cna=uk05E1K1iSkCAToUSgC4Albi; thw=cn; hng=CN%7Czh-CN%7CCNY%7C156; t=f9277a6b756eadb7a19de450304dc685; enc=v7jw24a%2B8dg2MiZzVZCT8ppVjd1YCgzHD8orfbYZnJNZ1STrJMocs44oDu%2BtsjfABeOzCyDdovHNJKIrrqSdPA%3D%3D; x=e%3D1%26p%3D*%26s%3D0%26c%3D0%26f%3D0%26g%3D0%26t%3D0%26__ll%3D-1%26_ato%3D0; miid=442944951227601934; UM_distinctid=16787c0c13e1a9-09fe691b0636d7-3f674706-144000-16787c0c13f58a; l=bBQM9JLqvNd2Ch80BOCg5uI8at_9IIRAguPRwN2Mi_5Id6T6tIQOl8GqIF96Vj5Rsx8B4xWabNp9-etlw; _m_h5_tk=352adc112846f3c2ebbfc4cd50514494_1552220416041; _m_h5_tk_enc=8b2c9881bc8423e9590367926c27fb52; _uab_collina=155228537554554124977176; _cc_=URm48syIZQ%3D%3D; mt=ci=0_0; JSESSIONID=F40EC26F9A7E103A018E967C41FABAC6; isg=BPv7jl_aI4Xr6xlDUwlpAZTfit9vb5vckiq6b-241_oRTBsudSCfohmOYqyn92dK',
         'referer': 'https://s.taobao.com/',
         'upgrade-insecure-requests':'1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
@@ -79,11 +75,11 @@ class GetIp():
                 else:
                     print("[有返回，但是被反爬]代理 ip {0} 及 端口号 {1} 不可用，即将从数据库中删除".format(ip, port))
                     self.delete_ip(ip)
-                    return False
+                    return True
             else:
                 print("[有返回，但是状态码异常]代理 ip {0} 及 端口号 {1} 不可用，即将从数据库中删除".format(ip, port))
                 self.delete_ip(ip)
-                return False
+                return True
 
     def getHTMLText(self, goods, index, sort):
         try:
@@ -117,46 +113,47 @@ class GetIp():
 
 def parsePage(html, goods_root, index, sort):
     try:
-        mongoSet.delete_many({"page" : int(index), "keyword" : goods_root, "sort": sort})
         plt = re.findall(r'\"view_price\"\:\"[\d\.]*?\"',html) #正则表达式来匹配 "view_price":"\d\."类型的字符串
         tlt = re.findall(r'\"raw_title\"\:\".*?\"',html)
         #正则表达式来匹配 "raw_title":".*?"类型的字符串,.*?是任意字符的最小匹配
+        nidlt = re.findall(r'\"nid\"\:\".*?\"',html)
+        userlt = re.findall(r'\"user_id\"\:\".*?\"',html)
         slt = re.findall(r'\"view_sales\"\:\".*?\"',html)
         dlt = re.findall(r'\"detail_url\"\:\".*?\"',html)
         piclt = re.findall(r'\"pic_url\"\:\".*?\"',html)
         nick = re.findall(r'\"nick\"\:\".*?\"',html)
-        lp = len(plt)
-        lt = len(tlt)
-        ls = len(slt)
-        ld = len(dlt)
-        li = len(piclt)
-        ln = len(nick)
-        for i in range(len(plt)):
-            if i >= lp | i >= lt | i >= ls| i >= ld| i >= li | i >= ln:
-                return False
+        for i in range(len(slt)-1):
             price = eval(plt[i].split(':', 1)[1])
             title = eval(tlt[i].split(':', 1)[1])
+            id = eval(nidlt[i].split(':', 1)[1])
+            userid = eval(userlt[i].split(':', 1)[1])
             sale = eval(slt[i].split(':', 1)[1])
             detailUrl = eval(dlt[i].split(':', 1)[1])
             picUrl = eval(piclt[i].split(':', 1)[1])
             shop = eval(nick[i].split(':', 1)[1])
-            score = int(str(sale)[0:-3])
-            score = score - float(price)
-            if ("旗舰店" in str(shop)) | ("自营" in str(shop)):
-                score = score + 10000
-            doc = {"name" : title, "price" : price, "sale" : sale, "href" : detailUrl,
-                   "image" : picUrl, "keyword" : goods_root, "page" : int(index), "shop" : shop, "sort": sort, "score": score}
-            x = mongoSet.insert_one(doc)
-
+            sale = int(str(sale)[0:-3])
+            score = 100000 - 200 * i
+            score = score + sale / 10
+            type = 1
+            if 'tmall' in detailUrl:
+                type = 2
+            doc = {"name" : title, "price" : price, "salecomment" : sale, "href" : detailUrl,
+                   "image" : picUrl, "keyword" : goods_root, "page" : int(index), "shop" : shop,
+                    "sort": sort, "score": score, "type" : type, "gid" : id, "user": userid}
+            v.docs.append(doc)
     except Exception as e:
         print (e)
 
-def start(goods, page, sort):
+def start(goods, sort):
+    v.docs = []
     time1 = time.time()
     getHtml = GetIp();
-    html= getHtml.getHTMLText(goods, page, sort)
+    for page in range(5):
+        html= getHtml.getHTMLText(goods, page, sort)
+        time.sleep(random.uniform(0.1,0.3))
     time2 = time.time()
     print('tb:' +str(time2-time1))
+    return v.docs
 
 if __name__=="__main__":
-    start('欧舒丹',"0", "0")
+    start('iphone7', "0")

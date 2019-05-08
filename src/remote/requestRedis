@@ -17,7 +17,7 @@ mongoConn = MongoClient("mongodb://47.100.108.8:27017/")
 mongoDb = mongoConn["parity"]  #连接parity数据库，没有则自动创建
 mongoSet = mongoDb["goods"]
 
-pool = redis.ConnectionPool(host='localhost', port=6379, password='binqing')
+pool = redis.ConnectionPool(host='47.100.108.8', port=6379, password='binqing')
 r = redis.Redis(connection_pool=pool)
 
 class MyGlobal:
@@ -97,7 +97,6 @@ if __name__ == '__main__':
                 print(result)
                 goodName = result.split('_', 2)[0]
                 sort = result.split('_', 2)[1]
-                print(goodName + " " + sort)
                 myglobal = MyGlobal()
                 executor.submit(catchTB, goodName, sort, myglobal)
                 executor.submit(catchJD, goodName, sort, myglobal)
