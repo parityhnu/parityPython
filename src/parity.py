@@ -6,14 +6,14 @@ import os
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-import py.jd as jd
-import py.taobao as taobao
-import py.jdcomment as jdcomment
-import py.tbcomment as tbcomment
-import py.tmcomment as tmcomment
-import py.jdattribute as jdattribute
-import py.tbattribute as tbattribute
-import py.tmattribute as tmattribute
+import src.jd as jd
+import src.taobao as taobao
+import src.jdcomment as jdcomment
+import src.tbcomment as tbcomment
+import src.tmcomment as tmcomment
+import src.jdattribute as jdattribute
+import src.tbattribute as tbattribute
+import src.tmattribute as tmattribute
 import redis
 from concurrent.futures import ThreadPoolExecutor
 from pymongo import MongoClient

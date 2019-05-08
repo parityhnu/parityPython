@@ -6,7 +6,7 @@ import re
 import MySQLdb
 import time
 from urllib import parse
-import py.getIP as getIP
+import remote.getIP as getIP
 import json
 import random
 import threading

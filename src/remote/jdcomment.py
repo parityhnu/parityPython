@@ -12,7 +12,7 @@ import time
 import MySQLdb
 import random
 from urllib import parse
-import py.getIP as getIP
+import remote.getIP as getIP
 from pymongo import MongoClient
 import json
 
