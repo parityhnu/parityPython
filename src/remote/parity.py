@@ -97,7 +97,7 @@ def insertparity(goodName, sort, myglobal):
                 editdistnce = eidt_1(tb['name'], jd['name'])
                 ave = max(len(tb['name']) , len(jd['name']))
                 print(editdistnce / ave)
-                if (editdistnce / ave) < 0.4:
+                if (editdistnce / ave) < 0.5:
                     if min > editdistnce:
                         min = editdistnce
                         parityJD = jd

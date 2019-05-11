@@ -161,7 +161,7 @@ def getComment(goodID, ip, port, type):
         else:
             return False
 
-def start(goods_root, sort):
+def start(goods_root, sort, page):
     v.docs = []
     # 传进来的page为0、1、2、3、4、5
     # 京东的规则是 首页1、3、5，js 2、4、6
@@ -177,7 +177,7 @@ def start(goods_root, sort):
     elif sort == 3:
         psort = 1
 
-    for page in range(5):
+    for page in range(page):
         i = int(page) + 1
         getIp = GetIp()
         if i % 2 == 1:

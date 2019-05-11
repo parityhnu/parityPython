@@ -27,14 +27,14 @@ class MyGlobal:
         self.docTB = []
         self.docJD = []
 
-def catchTB(goodName,sort, myglobal):
-    myglobal.docTB = taobao.start(goodName, sort)
+def catchTB(goodName,sort, page, myglobal):
+    myglobal.docTB = taobao.start(goodName, sort, page)
     myglobal.tbfinish = True
     if myglobal.jdfinish:
         parseList(goodName, sort, myglobal)
 
-def catchJD(goodName,sort, myglobal):
-    myglobal.docJD = jd.start(goodName, sort)
+def catchJD(goodName,sort, page, myglobal):
+    myglobal.docJD = jd.start(goodName, sort, page)
     myglobal.jdfinish = True
     if myglobal.tbfinish:
         parseList(goodName, sort, myglobal)
@@ -95,11 +95,18 @@ if __name__ == '__main__':
             if search != None:
                 result = search.decode()
                 print(result)
-                goodName = result.split('_', 2)[0]
-                sort = result.split('_', 2)[1]
+                goodName = result.split('_', 5)[0]
+                sort = result.split('_', 5)[1]
+                needJd = result.split('_', 5)[2]
+                needTb = result.split('_', 5)[3]
+                page = result.split('_', 5)[4]
                 myglobal = MyGlobal()
-                executor.submit(catchTB, goodName, sort, myglobal)
-                executor.submit(catchJD, goodName, sort, myglobal)
+                if needTb == '1':
+                    myglobal.jdfinish = True
+                    executor.submit(catchTB, goodName, sort, page, myglobal)
+                if needJd == '1':
+                    myglobal.tbfinish = True
+                    executor.submit(catchJD, goodName, sort, page, myglobal)
             # else:
             #     print(time.time())
             time.sleep(0.5)

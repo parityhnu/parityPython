@@ -7,7 +7,7 @@ import re
 import time
 import MySQLdb
 from urllib import parse
-import src.getIP as getIP
+import remote.getIP as getIP
 import random
 import threading
 
@@ -131,7 +131,11 @@ def parsePage(html, goods_root, index, sort):
             detailUrl = eval(dlt[i].split(':', 1)[1])
             picUrl = eval(piclt[i].split(':', 1)[1])
             shop = eval(nick[i].split(':', 1)[1])
-            sale = int(str(sale)[0:-3])
+            sale = sale.split('人')[0]
+            sale = sale.split('+')[0]
+            if '万' in sale:
+                sale = float(sale.split('万')[0])*10000
+            sale = int(sale)
             score = 100000 - 200 * i
             score = score + sale / 10
             type = 1
@@ -144,11 +148,11 @@ def parsePage(html, goods_root, index, sort):
     except Exception as e:
         print (e)
 
-def start(goods, sort):
+def start(goods, sort, page):
     v.docs = []
     time1 = time.time()
     getHtml = GetIp();
-    for page in range(5):
+    for page in range(page):
         html= getHtml.getHTMLText(goods, page, sort)
         time.sleep(random.uniform(0.1,0.3))
     time2 = time.time()
