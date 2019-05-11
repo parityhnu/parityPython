@@ -1,5 +1,10 @@
 #!/usr/bin/env Python
 # coding=utf-8
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 import requests
 from lxml import etree
 import re
@@ -161,7 +166,7 @@ def getComment(goodID, ip, port, type):
         else:
             return False
 
-def start(goods_root, sort, page):
+def start(goods_root, sort, index):
     v.docs = []
     # 传进来的page为0、1、2、3、4、5
     # 京东的规则是 首页1、3、5，js 2、4、6
@@ -177,7 +182,7 @@ def start(goods_root, sort, page):
     elif sort == 3:
         psort = 1
 
-    for page in range(page):
+    for page in range(index):
         i = int(page) + 1
         getIp = GetIp()
         if i % 2 == 1:

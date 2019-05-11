@@ -61,21 +61,17 @@ def parseList(goodName, sort, myglobal):
         docs.sort(key= sortByPrice,reverse = False)
     elif sort == 3:
         docs.sort(key= sortByPrice,reverse = True)
-    print(len(docs))
     index = 0
     page = 0
     try:
         for doc in docs:
-            print(index)
             doc['page'] = page
             index = index + 1
             if index == 20:
                 page = page + 1
                 index = 0
         mongoSet.delete_many({ "keyword" : goodName, "sort" : int(sort)})
-        t1 = time.time()
         mongoSet.insert_many(docs)
-        print(time.time() - t1)
     except Exception as e:
         print(e)
     parity(goodName, sort, myglobal)
@@ -83,7 +79,6 @@ def parseList(goodName, sort, myglobal):
 def parity(goodName, sort, myglobal):
     try:
         todo = goodName + '_' + str(sort)
-        print(todo)
         par.start(goodName, sort, myglobal.docTB, myglobal.docJD)
     except Exception as e:
         print(e)

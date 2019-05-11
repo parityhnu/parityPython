@@ -1,6 +1,10 @@
 #!/usr/bin/env Python
 # coding=utf-8
-
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 import requests
 from lxml import etree
 import re
@@ -148,16 +152,19 @@ def parsePage(html, goods_root, index, sort):
     except Exception as e:
         print (e)
 
-def start(goods, sort, page):
+def start(goods, sort, index):
     v.docs = []
     time1 = time.time()
     getHtml = GetIp();
-    for page in range(page):
-        html= getHtml.getHTMLText(goods, page, sort)
-        time.sleep(random.uniform(0.1,0.3))
-    time2 = time.time()
-    print('tb:' +str(time2-time1))
-    return v.docs
+    try:
+        for page in range(index):
+            html= getHtml.getHTMLText(goods, page, sort)
+            time.sleep(random.uniform(0.1,0.3))
+        time2 = time.time()
+        print('tb:' +str(time2-time1))
+        return v.docs
+    except Exception as e:
+        print(e)
 
 if __name__=="__main__":
-    start('iphone7', "0")
+    start('iphone7', "0", 5)

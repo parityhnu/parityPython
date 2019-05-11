@@ -1,5 +1,10 @@
 #!/usr/bin/env Python
 # coding=utf-8
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 import requests
 from lxml import etree
 import re
@@ -161,7 +166,7 @@ def getComment(goodID, ip, port, type):
         else:
             return False
 
-def start(goods_root, sort, page):
+def start(goods_root, sort, index):
     v.docs = []
     # 传进来的page为0、1、2、3、4、5
     # 京东的规则是 首页1、3、5，js 2、4、6
@@ -177,49 +182,52 @@ def start(goods_root, sort, page):
     elif sort == 3:
         psort = 1
 
-    for page in range(page):
-        i = int(page) + 1
-        getIp = GetIp()
-        if i % 2 == 1:
-            try:
-                url='https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&psort='+str(psort)
-                head = {'authority': 'search.jd.com',
-                        'method': 'GET',
-                        'path': '/s_new.php?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&psort='+str(psort),
-                        'scheme': 'https',
-                        'referer': 'https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page=' +str(i)+'&psort='+str(psort),
-                        'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
-                        'x-requested-with': 'XMLHttpRequest',
-                        'Cookie':'qrsc=3; pinId=RAGa4xMoVrs; xtest=1210.cf6b6759; ipLocation=%u5E7F%u4E1C; _jrda=5; TrackID=1aUdbc9HHS2MdEzabuYEyED1iDJaLWwBAfGBfyIHJZCLWKfWaB_KHKIMX9Vj9_2wUakxuSLAO9AFtB2U0SsAD-mXIh5rIfuDiSHSNhZcsJvg; shshshfpa=17943c91-d534-104f-a035-6e1719740bb6-1525571955; shshshfpb=2f200f7c5265e4af999b95b20d90e6618559f7251020a80ea1aee61500; cn=0; 3AB9D23F7A4B3C9B=QFOFIDQSIC7TZDQ7U4RPNYNFQN7S26SFCQQGTC3YU5UZQJZUBNPEXMX7O3R7SIRBTTJ72AXC4S3IJ46ESBLTNHD37U; ipLoc-djd=19-1607-3638-3638.608841570; __jdu=930036140; user-key=31a7628c-a9b2-44b0-8147-f10a9e597d6f; areaId=19; __jdv=122270672|direct|-|none|-|1529893590075; PCSYCityID=25; mt_xid=V2_52007VwsQU1xaVVoaSClUA2YLEAdbWk5YSk9MQAA0BBZOVQ0ADwNLGlUAZwQXVQpaAlkvShhcDHsCFU5eXENaGkIZWg5nAyJQbVhiWR9BGlUNZwoWYl1dVF0%3D; __jdc=122270672; shshshfp=72ec41b59960ea9a26956307465948f6; rkv=V0700; __jda=122270672.930036140.-.1529979524.1529984840.85; __jdb=122270672.1.930036140|85.1529984840; shshshsID=f797fbad20f4e576e9c30d1c381ecbb1_1_1529984840145'
-                        }
-                getIp.getHTMLText(url, head, goods_root, str(i),sort)
-            except Exception as e:
-                print(e)
-        else:
-            try:
-                a=time.time()
-                b='%.5f'%a
-                url='https://search.jd.com/s_new.php?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&s='+str(24*i-20)+'&scrolling=y&log_id='+str(b)+'&psort='+str(psort)
-                head={'authority': 'search.jd.com',
-                      'method': 'GET',
-                      'path': '/s_new.php?keyword=' + goods + '&enc=utf-8'+'&psort='+str(psort),
-                      'scheme':'https',
-                      'referer': 'https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page=' + str(i)+'&psort='+str(psort),
-                      'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
-                      'x-requested-with': 'XMLHttpRequest',
-                      'Cookie':'qrsc=3; pinId=RAGa4xMoVrs; xtest=1210.cf6b6759; ipLocation=%u5E7F%u4E1C; _jrda=5; TrackID=1aUdbc9HHS2MdEzabuYEyED1iDJaLWwBAfGBfyIHJZCLWKfWaB_KHKIMX9Vj9_2wUakxuSLAO9AFtB2U0SsAD-mXIh5rIfuDiSHSNhZcsJvg; shshshfpa=17943c91-d534-104f-a035-6e1719740bb6-1525571955; shshshfpb=2f200f7c5265e4af999b95b20d90e6618559f7251020a80ea1aee61500; cn=0; 3AB9D23F7A4B3C9B=QFOFIDQSIC7TZDQ7U4RPNYNFQN7S26SFCQQGTC3YU5UZQJZUBNPEXMX7O3R7SIRBTTJ72AXC4S3IJ46ESBLTNHD37U; ipLoc-djd=19-1607-3638-3638.608841570; __jdu=930036140; user-key=31a7628c-a9b2-44b0-8147-f10a9e597d6f; areaId=19; __jdv=122270672|direct|-|none|-|1529893590075; PCSYCityID=25; mt_xid=V2_52007VwsQU1xaVVoaSClUA2YLEAdbWk5YSk9MQAA0BBZOVQ0ADwNLGlUAZwQXVQpaAlkvShhcDHsCFU5eXENaGkIZWg5nAyJQbVhiWR9BGlUNZwoWYl1dVF0%3D; __jdc=122270672; shshshfp=72ec41b59960ea9a26956307465948f6; rkv=V0700; __jda=122270672.930036140.-.1529979524.1529984840.85; __jdb=122270672.1.930036140|85.1529984840; shshshsID=f797fbad20f4e576e9c30d1c381ecbb1_1_1529984840145'
+    try:
+        for page in range(index):
+            i = int(page) + 1
+            getIp = GetIp()
+            if i % 2 == 1:
+                try:
+                    url='https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&psort='+str(psort)
+                    head = {'authority': 'search.jd.com',
+                            'method': 'GET',
+                            'path': '/s_new.php?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&psort='+str(psort),
+                            'scheme': 'https',
+                            'referer': 'https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page=' +str(i)+'&psort='+str(psort),
+                            'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
+                            'x-requested-with': 'XMLHttpRequest',
+                            'Cookie':'qrsc=3; pinId=RAGa4xMoVrs; xtest=1210.cf6b6759; ipLocation=%u5E7F%u4E1C; _jrda=5; TrackID=1aUdbc9HHS2MdEzabuYEyED1iDJaLWwBAfGBfyIHJZCLWKfWaB_KHKIMX9Vj9_2wUakxuSLAO9AFtB2U0SsAD-mXIh5rIfuDiSHSNhZcsJvg; shshshfpa=17943c91-d534-104f-a035-6e1719740bb6-1525571955; shshshfpb=2f200f7c5265e4af999b95b20d90e6618559f7251020a80ea1aee61500; cn=0; 3AB9D23F7A4B3C9B=QFOFIDQSIC7TZDQ7U4RPNYNFQN7S26SFCQQGTC3YU5UZQJZUBNPEXMX7O3R7SIRBTTJ72AXC4S3IJ46ESBLTNHD37U; ipLoc-djd=19-1607-3638-3638.608841570; __jdu=930036140; user-key=31a7628c-a9b2-44b0-8147-f10a9e597d6f; areaId=19; __jdv=122270672|direct|-|none|-|1529893590075; PCSYCityID=25; mt_xid=V2_52007VwsQU1xaVVoaSClUA2YLEAdbWk5YSk9MQAA0BBZOVQ0ADwNLGlUAZwQXVQpaAlkvShhcDHsCFU5eXENaGkIZWg5nAyJQbVhiWR9BGlUNZwoWYl1dVF0%3D; __jdc=122270672; shshshfp=72ec41b59960ea9a26956307465948f6; rkv=V0700; __jda=122270672.930036140.-.1529979524.1529984840.85; __jdb=122270672.1.930036140|85.1529984840; shshshsID=f797fbad20f4e576e9c30d1c381ecbb1_1_1529984840145'
+                            }
+                    getIp.getHTMLText(url, head, goods_root, str(i),sort)
+                except Exception as e:
+                    print(e)
+            else:
+                try:
+                    a=time.time()
+                    b='%.5f'%a
+                    url='https://search.jd.com/s_new.php?keyword=' + goods + '&enc=utf-8&page='+str(i)+'&s='+str(24*i-20)+'&scrolling=y&log_id='+str(b)+'&psort='+str(psort)
+                    head={'authority': 'search.jd.com',
+                          'method': 'GET',
+                          'path': '/s_new.php?keyword=' + goods + '&enc=utf-8'+'&psort='+str(psort),
+                          'scheme':'https',
+                          'referer': 'https://search.jd.com/Search?keyword=' + goods + '&enc=utf-8&page=' + str(i)+'&psort='+str(psort),
+                          'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
+                          'x-requested-with': 'XMLHttpRequest',
+                          'Cookie':'qrsc=3; pinId=RAGa4xMoVrs; xtest=1210.cf6b6759; ipLocation=%u5E7F%u4E1C; _jrda=5; TrackID=1aUdbc9HHS2MdEzabuYEyED1iDJaLWwBAfGBfyIHJZCLWKfWaB_KHKIMX9Vj9_2wUakxuSLAO9AFtB2U0SsAD-mXIh5rIfuDiSHSNhZcsJvg; shshshfpa=17943c91-d534-104f-a035-6e1719740bb6-1525571955; shshshfpb=2f200f7c5265e4af999b95b20d90e6618559f7251020a80ea1aee61500; cn=0; 3AB9D23F7A4B3C9B=QFOFIDQSIC7TZDQ7U4RPNYNFQN7S26SFCQQGTC3YU5UZQJZUBNPEXMX7O3R7SIRBTTJ72AXC4S3IJ46ESBLTNHD37U; ipLoc-djd=19-1607-3638-3638.608841570; __jdu=930036140; user-key=31a7628c-a9b2-44b0-8147-f10a9e597d6f; areaId=19; __jdv=122270672|direct|-|none|-|1529893590075; PCSYCityID=25; mt_xid=V2_52007VwsQU1xaVVoaSClUA2YLEAdbWk5YSk9MQAA0BBZOVQ0ADwNLGlUAZwQXVQpaAlkvShhcDHsCFU5eXENaGkIZWg5nAyJQbVhiWR9BGlUNZwoWYl1dVF0%3D; __jdc=122270672; shshshfp=72ec41b59960ea9a26956307465948f6; rkv=V0700; __jda=122270672.930036140.-.1529979524.1529984840.85; __jdb=122270672.1.930036140|85.1529984840; shshshsID=f797fbad20f4e576e9c30d1c381ecbb1_1_1529984840145'
 
-                      }
-                getIp.getHTMLText(url, head, goods_root, str(i), sort)
-            except Exception as e:
-                print(e)
-        time.sleep(random.uniform(0.1,0.3))
-    time2 = time.time()
-    print('jd:' +str(time2-time1))
-    return v.docs
+                          }
+                    getIp.getHTMLText(url, head, goods_root, str(i), sort)
+                except Exception as e:
+                    print(e)
+            time.sleep(random.uniform(0.1,0.3))
+        time2 = time.time()
+        print('jd:' +str(time2-time1))
+        return v.docs
+    except Exception as e:
+        print(e)
 
 if __name__=="__main__":
     goods_root = 'iphone'
-    start(goods_root, "0")
+    start(goods_root, "0",5)
     cursor.close()
     conn.close()

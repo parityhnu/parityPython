@@ -59,8 +59,9 @@ def catchJD(goodName,sort):
 
 def filterTB(goodName, sort, myglobal):
     resultTB = []
+    datas = goodName.split(' ')
     for tb in myglobal.docTB:
-        if eidt_1(goodName, tb.get('name')) == 0:
+        if fenci(datas, tb.get('name')) == 0:
             resultTB.append(tb)
     myglobal.resultTB = resultTB
     myglobal.filtert = True
@@ -69,13 +70,24 @@ def filterTB(goodName, sort, myglobal):
 
 def filterJD(goodName, sort, myglobal):
     resultJD = []
+    datas = goodName.split(' ')
     for jd in myglobal.docJD:
-        if eidt_1(goodName, jd.get('name')) == 0:
+        if fenci(datas, jd.get('name')) == 0:
             resultJD.append(jd)
     myglobal.resultJD = resultJD
     myglobal.filterj = True
     if myglobal.filtert:
         insertparity(goodName, sort, myglobal)
+
+def fenci(datas, title):
+    title = title.lower()
+    result = 0
+    for data in datas:
+        data = data.lower()
+        if title.find(data) < 0:
+            result = 1
+            break
+    return result
 
 def parity(goodName, sort, myglobal):
     with ThreadPoolExecutor(2) as executor:
@@ -96,8 +108,8 @@ def insertparity(goodName, sort, myglobal):
             for jd in myglobal.resultJD:
                 editdistnce = eidt_1(tb['name'], jd['name'])
                 ave = max(len(tb['name']) , len(jd['name']))
-                print(editdistnce / ave)
-                if (editdistnce / ave) < 0.5:
+                if (editdistnce / ave) < 0.4:
+                    print(editdistnce / ave)
                     if min > editdistnce:
                         min = editdistnce
                         parityJD = jd
