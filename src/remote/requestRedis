@@ -28,13 +28,13 @@ class MyGlobal:
         self.docJD = []
 
 def catchTB(goodName,sort, myglobal, page):
-    myglobal.docTB = taobao.start(goodName, sort, page)
+    myglobal.docTB = taobao.start(goodName, sort, int(page))
     myglobal.tbfinish = True
     if myglobal.jdfinish:
         parseList(goodName, sort, myglobal)
 
 def catchJD(goodName,sort, myglobal, page):
-    myglobal.docJD = jd.start(goodName, sort, page)
+    myglobal.docJD = jd.start(goodName, sort, int(page))
     myglobal.jdfinish = True
     if myglobal.tbfinish:
         parseList(goodName, sort, myglobal)
