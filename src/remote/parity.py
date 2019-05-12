@@ -8,7 +8,7 @@ rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 import remote.jd as jd
 import remote.taobao as taobao
-import remote.jdcomment as jdcomment
+import remote.jdcomment2 as jdcomment
 import remote.tbcomment as tbcomment
 import remote.tmcomment as tmcomment
 import remote.jdattribute as jdattribute
