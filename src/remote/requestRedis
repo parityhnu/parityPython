@@ -97,11 +97,13 @@ if __name__ == '__main__':
                 page = result.split('_', 5)[4]
                 myglobal = MyGlobal()
                 if needTb == '1':
-                    myglobal.jdfinish = True
                     executor.submit(catchTB, goodName, sort, page, myglobal)
-                if needJd == '1':
+                else:
                     myglobal.tbfinish = True
+                if needJd == '1':
                     executor.submit(catchJD, goodName, sort, page, myglobal)
+                else:
+                    myglobal.jdfinish = True
             # else:
             #     print(time.time())
             time.sleep(0.5)

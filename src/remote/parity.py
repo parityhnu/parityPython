@@ -1,4 +1,4 @@
-import urllib3
+﻿import urllib3
 import re
 import time
 import sys
@@ -108,7 +108,7 @@ def insertparity(goodName, sort, myglobal):
             for jd in myglobal.resultJD:
                 editdistnce = eidt_1(tb['name'], jd['name'])
                 ave = max(len(tb['name']) , len(jd['name']))
-                if (editdistnce / ave) < 0.4:
+                if (editdistnce / ave) < 0.5:
                     print(editdistnce / ave)
                     if min > editdistnce:
                         min = editdistnce
