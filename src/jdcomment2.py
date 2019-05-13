@@ -28,7 +28,7 @@ def start(id):
     # 获取评论数据
     for index in range(5):
         try:
-            time.sleep(0.2)
+            time.sleep(0.5)
             wait = ui.WebDriverWait(driver,1)
             wait.until(lambda driver: driver.find_element_by_id('comment-0').find_elements_by_class_name('comment-item'))
             divs = driver.find_element_by_id('comment-0').find_elements_by_class_name('comment-item')
